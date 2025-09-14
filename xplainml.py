@@ -10,50 +10,63 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='XplainML - Interpretable Machine Learning Tool')
-    parser.add_argument('--mode', choices=['cli', 'web'], default='cli', 
-                       help='Run mode: cli for command line, web for Streamlit dashboard')
-    parser.add_argument('--port', type=int, default=8501,
-                       help='Port for web dashboard (default: 8501)')
     
-    # Pass through all other arguments to the appropriate module
-    args, unknown = parser.parse_known_args()
+    # Support both positional and named arguments for mode
+    if len(sys.argv) > 1 and sys.argv[1] in ['web', 'cli']:
+        mode = sys.argv[1]
+        remaining_args = sys.argv[2:]
+    else:
+        parser.add_argument('--mode', choices=['cli', 'web'], default='cli', 
+                           help='Run mode: cli for command line, web for React dashboard')
+        parser.add_argument('--port', type=int, default=8501,
+                           help='Port for web dashboard (default: 8501)')
+        
+        # Pass through all other arguments to the appropriate module
+        args, unknown = parser.parse_known_args()
+        mode = args.mode
+        remaining_args = unknown
     
-    if args.mode == 'web':
-        # Launch Streamlit dashboard
+    if mode == 'web':
+        # Launch React frontend and FastAPI backend
         import subprocess
-        cmd = [
-            sys.executable, '-m', 'streamlit', 'run', 
-            'frontend/app.py', 
-            '--server.port', str(args.port)
-        ] + unknown
-        subprocess.run(cmd)
+        import threading
+        import time
+        
+        def start_backend():
+            backend_cmd = [
+                sys.executable, '-m', 'uvicorn', 
+                'backend-api.main:app', 
+                '--host', '0.0.0.0',
+                '--port', '8000',
+                '--reload'
+            ]
+            subprocess.run(backend_cmd)
+        
+        def start_frontend():
+            time.sleep(3)  # Wait for backend to start
+            frontend_cmd = ['npm', 'start']
+            subprocess.run(frontend_cmd, cwd='frontend')
+        
+        print(f"🚀 Starting XplainML React application...")
+        print("Backend API: http://localhost:8000")
+        print("Frontend: http://localhost:3000")
+        
+        # Start backend in a separate thread
+        backend_thread = threading.Thread(target=start_backend)
+        backend_thread.daemon = True
+        backend_thread.start()
+        
+        # Start frontend
+        start_frontend()
     
     else:
         # Run CLI interface
         backend_dir = os.path.join(os.path.dirname(__file__), 'backend')
         cli_script = os.path.join(backend_dir, 'xplainml.py')
         
-        # Execute the CLI script with filtered arguments
+        # Execute the CLI script with arguments
         import subprocess
-        
-        # Remove --mode and --port arguments for CLI
-        filtered_args = []
-        skip_next = False
-        for i, arg in enumerate(sys.argv[1:]):
-            if skip_next:
-                skip_next = False
-                continue
-            if arg == '--mode':
-                skip_next = True
-                continue
-            if arg == '--port':
-                skip_next = True
-                continue
-            if arg.startswith('--port='):
-                continue
-            filtered_args.append(arg)
-        
-        cmd = [sys.executable, cli_script] + filtered_args
+        cmd = [sys.executable, cli_script] + remaining_args
         subprocess.run(cmd)
 
 if __name__ == '__main__':
