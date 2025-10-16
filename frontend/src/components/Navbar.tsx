@@ -24,6 +24,7 @@ function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  
   const isActive = (href: string) => {
     if (href === '/') {
       return location.pathname === '/';
