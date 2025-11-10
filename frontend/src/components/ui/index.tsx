@@ -357,3 +357,217 @@ export function ProgressBar({
     </div>
   );
 }
+
+// ----------------------
+// Modal
+// ----------------------
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+interface ModalProps {
+  open: boolean;
+  onClose?: () => void;
+  title?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  closeOnBackdrop?: boolean;
+}
+
+export function Modal({ open, onClose, title, children, footer, size = 'md', closeOnBackdrop = true }: ModalProps) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) onClose();
+    };
+    if (open) document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const sizes = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby={title ? 'modal-title' : undefined}>
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={() => closeOnBackdrop && onClose?.()}
+      />
+      <div className={`relative w-full ${sizes[size]} mx-4`}> 
+        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+          {(title || onClose) && (
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+              {title && <h3 id="modal-title" className="text-sm font-semibold text-gray-900">{title}</h3>}
+              {onClose && (
+                <button onClick={onClose} aria-label="Close" className="text-gray-500 hover:text-gray-800">✕</button>
+              )}
+            </div>
+          )}
+          <div className="p-6">{children}</div>
+          {footer && (
+            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">{footer}</div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ----------------------
+// Tabs
+// ----------------------
+interface TabItem {
+  id: string;
+  label: string;
+  content: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+interface TabsProps {
+  tabs: TabItem[];
+  activeId?: string;
+  onChange?: (id: string) => void;
+  variant?: 'underline' | 'pill';
+}
+
+export function Tabs({ tabs, activeId, onChange, variant = 'pill' }: TabsProps) {
+  const [active, setActive] = React.useState(activeId || tabs[0]?.id);
+  React.useEffect(() => { if (activeId) setActive(activeId); }, [activeId]);
+
+  const set = (id: string) => {
+    setActive(id);
+    onChange?.(id);
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            className={
+              variant === 'pill'
+                ? `px-4 py-2 rounded-lg text-sm font-medium border ${active === t.id ? 'bg-blue-50 text-blue-700 border-blue-500' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'}`
+                : `px-3 py-2 text-sm font-medium border-b-2 ${active === t.id ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'}`
+            }
+            onClick={() => set(t.id)}
+          >
+            <span className="inline-flex items-center">{t.icon}<span className={t.icon ? 'ml-2' : ''}>{t.label}</span></span>
+          </button>
+        ))}
+      </div>
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        {tabs.map((t) => (
+          <div key={t.id} style={{ display: active === t.id ? 'block' : 'none' }}>{t.content}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------
+// Tooltip
+// ----------------------
+interface TooltipProps {
+  content: React.ReactNode;
+  children: React.ReactNode;
+  placement?: 'top' | 'right' | 'bottom' | 'left';
+}
+
+export function Tooltip({ content, children, placement = 'top' }: TooltipProps) {
+  const [open, setOpen] = React.useState(false);
+  const pos = {
+    top: 'bottom-full left-1/2 -translate-x-1/2 -translate-y-2',
+    bottom: 'top-full left-1/2 -translate-x-1/2 translate-y-2',
+    left: 'right-full top-1/2 -translate-y-1/2 -translate-x-2',
+    right: 'left-full top-1/2 -translate-y-1/2 translate-x-2',
+  }[placement];
+
+  return (
+    <span className="relative inline-block" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      {children}
+      {open && (
+        <span className={`absolute px-2 py-1 text-xs rounded bg-gray-900 text-white shadow ${pos}`}>
+          {content}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// ----------------------
+// Accordion
+// ----------------------
+interface AccordionItem { id: string; title: string; content: React.ReactNode; }
+interface AccordionProps { items: AccordionItem[]; defaultOpenId?: string; }
+
+export function Accordion({ items, defaultOpenId }: AccordionProps) {
+  const [openId, setOpenId] = React.useState(defaultOpenId || items[0]?.id);
+  return (
+    <div className="space-y-3">
+      {items.map((it) => (
+        <div key={it.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+          <button
+            className="w-full text-left px-4 py-3 font-medium flex justify-between items-center hover:bg-gray-50"
+            onClick={() => setOpenId((prev) => (prev === it.id ? '' : it.id))}
+          >
+            {it.title}
+            <span className="text-gray-400">{openId === it.id ? '−' : '+'}</span>
+          </button>
+          {openId === it.id && (
+            <div className="px-4 py-3 border-t border-gray-100 text-sm text-gray-700">{it.content}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ----------------------
+// Skeleton
+// ----------------------
+interface SkeletonProps { width?: string | number; height?: string | number; circle?: boolean; className?: string; }
+export function Skeleton({ width = '100%', height = 16, circle = false, className = '' }: SkeletonProps) {
+  const style: React.CSSProperties = { width, height, borderRadius: circle ? '9999px' : '8px' };
+  return <div className={`bg-gray-200 relative overflow-hidden ${className}`} style={style}>
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+  </div>;
+}
+
+// ----------------------
+// Stepper
+// ----------------------
+interface StepperStep { id: string; label: string; }
+interface StepperProps { steps: StepperStep[]; current: number; onStepClick?: (index: number) => void; }
+export function Stepper({ steps, current, onStepClick }: StepperProps) {
+  return (
+    <div className="flex items-center">
+      {steps.map((s, idx) => {
+        const done = idx < current;
+        const active = idx === current;
+        return (
+          <div key={s.id} className="flex items-center">
+            <button
+              className={`w-8 h-8 rounded-full border flex items-center justify-center text-sm font-semibold ${
+                done ? 'bg-green-500 text-white border-green-500' : active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'
+              }`}
+              onClick={() => onStepClick?.(idx)}
+              aria-current={active}
+            >
+              {done ? '✓' : idx + 1}
+            </button>
+            {idx !== steps.length - 1 && (
+              <div className={`w-12 h-0.5 mx-2 ${done ? 'bg-green-500' : 'bg-gray-300'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

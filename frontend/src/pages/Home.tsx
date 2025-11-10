@@ -108,7 +108,7 @@ function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/data-upload"
+              to="/upload"
               className="btn btn-primary inline-flex items-center space-x-2"
             >
               <DocumentArrowUpIcon className="w-5 h-5" />
@@ -117,7 +117,7 @@ function Home() {
             
             {currentStep > 1 && (
               <Link
-                to={`/${['', 'data-upload', 'model-training', 'explanations', 'predictions'][currentStep]}`}
+                to={`/${['', 'upload', 'training', 'explanations', 'predictions'][currentStep]}`}
                 className="btn btn-secondary inline-flex items-center space-x-2"
               >
                 <span>Continue to Step {currentStep}</span>
@@ -239,12 +239,12 @@ function Home() {
           </p>
           
           {!state.data ? (
-            <Link to="/data-upload" className="btn btn-primary">
+            <Link to="/upload" className="btn btn-primary">
               Upload Your First Dataset
             </Link>
           ) : (
             <div className="space-x-4">
-              <Link to="/model-training" className="btn btn-primary">
+              <Link to="/training" className="btn btn-primary">
                 Train New Model
               </Link>
               <Link to="/predictions" className="btn btn-secondary">

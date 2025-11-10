@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   HomeIcon,
   DocumentArrowUpIcon,
@@ -10,17 +11,21 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAppContext } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 
+// NOTE: Routes must match those defined in App.tsx (<Route path="/upload" ...>, <Route path="/training" ...>)
+// Previously these were '/data-upload' and '/model-training' causing navigation not to work.
 const navigation = [
   { name: 'Home', href: '/', icon: HomeIcon },
-  { name: 'Upload Data', href: '/data-upload', icon: DocumentArrowUpIcon },
-  { name: 'Train Models', href: '/model-training', icon: CogIcon },
+  { name: 'Upload Data', href: '/upload', icon: DocumentArrowUpIcon },
+  { name: 'Train Models', href: '/training', icon: CogIcon },
   { name: 'Explanations', href: '/explanations', icon: EyeIcon },
   { name: 'Predictions', href: '/predictions', icon: CpuChipIcon },
 ];
 
 function Navbar() {
   const { state, dispatch } = useAppContext();
+  const { mode, toggle } = useTheme();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -52,18 +57,24 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <nav className="shadow-sm border-b border-gray-200 sticky top-0 z-50 backdrop-blur bg-white/80 dark:bg-gray-900/80 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Desktop Navigation */}
           <div className="flex">
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">X</span>
+              <Link to="/" className="flex items-center space-x-3 group">
+                <motion.div
+                  whileHover={{ rotate: 3, scale: 1.05 }}
+                  className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                >
+                  <span className="text-white font-bold text-lg tracking-tight">X</span>
+                </motion.div>
+                <div className="flex flex-col -space-y-1">
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-snug">XplainML</span>
+                  <span className="text-[10px] font-medium text-blue-600 dark:text-blue-300 tracking-wider">INTERPRETABILITY</span>
                 </div>
-                <span className="text-xl font-bold text-gray-900">XplainML</span>
               </Link>
             </div>
 
@@ -75,21 +86,29 @@ function Navbar() {
                 const status = getStepStatus(item.name);
                 
                 return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      active
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.name}
-                    {status === 'completed' && (
-                      <div className="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
-                    )}
-                  </Link>
+                  <motion.div whileHover={{ y: -2 }} key={item.name}>
+                    <Link
+                      to={item.href}
+                      className={`relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                        active
+                          ? 'bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-300'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 mr-2 opacity-70" />
+                      <span>{item.name}</span>
+                      {status === 'completed' && (
+                        <span className="ml-2 inline-block w-2 h-2 bg-green-500 rounded-full shadow"></span>
+                      )}
+                      {active && (
+                        <motion.span
+                          layoutId="nav-active-pill"
+                          className="absolute inset-0 rounded-lg -z-10 bg-gradient-to-r from-blue-500/10 to-purple-500/10"
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>
@@ -117,12 +136,20 @@ function Navbar() {
             </div>
 
             {/* Reset button */}
-            <button
-              onClick={resetApp}
-              className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1 rounded-md border border-gray-300 hover:border-gray-400 transition-colors duration-200"
-            >
-              Reset
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={toggle}
+                className="text-xs px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                {mode === 'light' ? 'Dark' : 'Light'} Mode
+              </button>
+              <button
+                onClick={resetApp}
+                className="text-xs px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -151,29 +178,30 @@ function Navbar() {
               const status = getStepStatus(item.name);
               
               return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                    active
-                      ? 'bg-blue-50 border-blue-500 text-blue-700'
-                      : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="flex items-center">
-                    <Icon className="w-5 h-5 mr-3" />
-                    {item.name}
-                    {status === 'completed' && (
-                      <div className="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
-                    )}
-                  </div>
-                </Link>
+                <motion.div key={item.name} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+                  <Link
+                    to={item.href}
+                    className={`block px-4 py-3 rounded-lg text-sm font-medium ${
+                      active
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <Icon className="w-5 h-5 mr-3 opacity-70" />
+                      <span>{item.name}</span>
+                      {status === 'completed' && (
+                        <div className="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
+                      )}
+                    </div>
+                  </Link>
+                </motion.div>
               );
             })}
             
             {/* Mobile progress & reset */}
-            <div className="pl-3 pr-4 py-2 border-t border-gray-200 mt-2">
+            <div className="pl-3 pr-4 py-2 border-t border-gray-200 dark:border-gray-700 mt-2">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Progress:</span>
                 <div className="flex space-x-1">
@@ -189,12 +217,20 @@ function Navbar() {
                     );
                   })}
                 </div>
-                <button
-                  onClick={resetApp}
-                  className="ml-4 text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-300"
-                >
-                  Reset
-                </button>
+                <div className="flex items-center space-x-2 ml-3">
+                  <button
+                    onClick={toggle}
+                    className="text-xs px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {mode === 'light' ? 'Dark' : 'Light'}
+                  </button>
+                  <button
+                    onClick={resetApp}
+                    className="text-xs px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                  >
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
           </div>

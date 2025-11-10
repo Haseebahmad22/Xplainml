@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 import './styles/components.css';
@@ -15,26 +16,77 @@ import Predictions from './pages/Predictions';
 
 // Context
 import { AppProvider } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
+
+function PageTransitions() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/"
+          element={
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+              <Home />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+              <DataUpload />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/training"
+          element={
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+              <ModelTraining />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/explanations"
+          element={
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+              <Explanations />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/visualizations"
+          element={
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+              <Visualizations />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/predictions"
+          element={
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+              <Predictions />
+            </motion.div>
+          }
+        />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 function App() {
   return (
     <AppProvider>
-      <Router>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-          <Navbar />
-          
-          <main className="container mx-auto px-4 py-8">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/upload" element={<DataUpload />} />
-              <Route path="/training" element={<ModelTraining />} />
-              <Route path="/explanations" element={<Explanations />} />
-              <Route path="/visualizations" element={<Visualizations />} />
-              <Route path="/predictions" element={<Predictions />} />
-            </Routes>
-          </main>
-          
-          <Toaster
+      <ThemeProvider>
+        <Router>
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+            <Navbar />
+            <main className="container mx-auto px-4 py-8">
+              <PageTransitions />
+            </main>
+            <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
@@ -58,8 +110,9 @@ function App() {
               },
             }}
           />
-        </div>
-      </Router>
+          </div>
+        </Router>
+      </ThemeProvider>
     </AppProvider>
   );
 }
